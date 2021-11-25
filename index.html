@@ -1,0 +1,1607 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='utf-8' />
+  <title>Showcase | Wayfarer</title>
+  <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.0/jquery.min.js"></script>
+  <script src='https://api.mapbox.com/mapbox-gl-js/v2.0.1/mapbox-gl.js'></script>
+  <link href='https://api.mapbox.com/mapbox-gl-js/v2.0.1/mapbox-gl.css' rel='stylesheet' />
+  <script src='https://npmcdn.com/csv2geojson@latest/csv2geojson.js'></script>
+  <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
+  <script src="https://kit.fontawesome.com/5015486454.js" crossorigin="anonymous"></script>
+  <style>
+a {
+  text-decoration: none;
+}
+body {
+  margin: 0;
+  padding: 0;
+}
+ul {
+  padding-left: 0;
+  list-style: none;
+}
+ul, li {
+  font-size: 90%;
+  margin: 0;
+  padding: 0;
+  vertical-align: baseline;
+  border: 0;
+  outline: 0;
+  background: transparent;
+}
+ul>li {
+  display: inline;
+}
+ul>li:not(:nth-child(1)):before {
+  content: ' | ';
+  color: #666;
+}
+.category {
+  padding: 2px;
+}
+.category:empty {
+  padding: 0;
+}
+.mapboxgl-container {
+  cursor: pointer;
+}
+.mapboxgl-popup {
+  padding-bottom: 0;
+}
+.mapboxgl-popup-anchor-top>.mapboxgl-popup-content {
+  margin-top: 3px;
+}
+.mapboxgl-popup-anchor-top>.mapboxgl-popup-tip {
+  border-bottom-color: rgb(61, 59, 59);
+}
+.mapboxgl-popup-close-button {
+  display: none;
+}
+.mapboxgl-popup-content div.portalPhoto {
+  width: 100%;
+  text-align: center;
+}
+.mapboxgl-popup-content h3 {
+  font-weight: 700;
+  display: block;
+  margin: 0;
+  margin-top: -5px;
+  padding: 5px 10px;
+  text-align: center;
+  color: #fff;
+  background: rgb(61, 59, 59);
+}
+.mapboxgl-popup-content h4 {
+  font-weight: 400;
+  line-height: 1.8;
+  display: block;
+  margin: 0;
+  padding: 0 5px;
+}
+.mapboxgl-popup-content {
+  font: 400 11px/16px 'Source Sans Pro', 'Helvetica Neue', Sans-serif;
+  width: 225px;
+  padding: 0;
+}
+.mapboxgl-popup-content-wrapper {
+  padding: 1%;
+}
+.portalPhoto img {
+  width: 215px;
+  height: 215px;
+  margin-top: 10px;
+  object-fit: cover;
+}
+#map {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+}
+#map {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+}
+#menu {
+  font-family: 'Open Sans', sans-serif;
+  position: absolute;
+  padding: 5px;
+  background: rgba(191, 191, 191, .6);
+}
+  </style>
+</head>
+<body>
+  <div id='map'></div>
+  <div id="menu">
+    <ul>
+      <li type="disc"><a href="https://docs.google.com/spreadsheets/d/1ry2hwuzi-SArBQhrsDAP9LTJHBbi3hAyWGo9a4JBxfI/edit?usp=sharing"><i class="fas fa-table"></i> データ(スプレッドシート)</a></li>
+      <li type="disc"><a href="https://forms.gle/JbQJandHtdTSoeLp8"><i class="fas fa-file-upload"></i> データ登録フォーム</a></li>
+    </ul>
+  </div>
+  <script>
+    var transformRequest = (url, resourceType) => {
+      var isMapboxRequest = url.slice(8, 22) === "api.mapbox.com" || url.slice(10, 26) === "tiles.mapbox.com";
+      return {
+        url: isMapboxRequest ? url.replace("?", "?pluginName=sheetMapper&") : url
+      };
+    };
+    mapboxgl.accessToken = 'pk.eyJ1IjoieW9naHVydG9uIiwiYSI6ImNrMWMzaTRodTAwMXkzbG5wdXJvMXFuYXoifQ.7TYzn64qL5_Kktp--kX6Dw';
+    var map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/yoghurton/cksn875dm2ivp17poo64eew9m',
+      center: [140.084556, 36.104611],
+      zoom: 4.5,
+      transformRequest: transformRequest
+    });
+    $(document).ready(function () {
+      $.ajax({
+        type: "GET",
+        url: 'https://docs.google.com/spreadsheets/d/1ry2hwuzi-SArBQhrsDAP9LTJHBbi3hAyWGo9a4JBxfI/gviz/tq?tqx=out:csv&sheet=map_data',
+        dataType: "text",
+        success: function (csvData) {
+          makeGeoJSON(csvData);
+        }
+      });
+
+      function makeGeoJSON(csvData) {
+        csv2geojson.csv2geojson(csvData, {
+          latfield: 'lat',
+          lonfield: 'lng',
+          delimiter: ','
+        }, function (err, data) {
+          map.on('load', function () {
+            map.addSource("cells", {
+              "type": "geojson",
+              "data": {
+                "type": "FeatureCollection",
+                "features": [{
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [123.078901, 23.274622],
+                      [124.508523, 22.929281],
+                      [124.508523, 24.258610],
+                      [123.078901, 24.619021],
+                      [123.078901, 23.274622]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS13-PAPA-00"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [121.628310, 23.610040],
+                      [123.078901, 23.274622],
+                      [123.078901, 24.619021],
+                      [121.628310, 24.968878],
+                      [121.628310, 23.610040]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS13-PAPA-03"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [123.078901, 24.619021],
+                      [124.508523, 24.258610],
+                      [124.508523, 25.585725],
+                      [123.078901, 25.960395],
+                      [123.078901, 24.619021]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS14-PAPA-15"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [128.652984, 26.961566],
+                      [129.981235, 26.524394],
+                      [129.981235, 27.780273],
+                      [128.652984, 28.231282],
+                      [128.652984, 26.961566]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS14-ROMEO-00"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [127.297204, 27.391591],
+                      [128.652984, 26.961566],
+                      [128.652984, 28.231282],
+                      [127.297204, 28.674617],
+                      [127.297204, 27.391591]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS14-ROMEO-01"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [127.297204, 26.102023],
+                      [128.652984, 25.686230],
+                      [128.652984, 26.961566],
+                      [127.297204, 27.391591],
+                      [127.297204, 26.102023]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS14-ROMEO-02"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [124.508523, 24.258610],
+                      [125.915207, 23.888859],
+                      [125.915207, 25.201115],
+                      [124.508523, 25.585725],
+                      [124.508523, 24.258610]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS14-ROMEO-10"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [125.915207, 26.509881],
+                      [127.297204, 26.102023],
+                      [127.297204, 27.391591],
+                      [125.915207, 27.813133],
+                      [125.915207, 26.509881]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS14-ROMEO-13"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [131.280858, 24.836040],
+                      [132.550960, 24.404181],
+                      [132.550960, 25.633866],
+                      [131.280858, 26.081397],
+                      [131.280858, 24.836040]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS14-SIERRA-13"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [129.981235, 25.263807],
+                      [131.280858, 24.836040],
+                      [131.280858, 26.081397],
+                      [129.981235, 26.524394],
+                      [129.981235, 25.263807]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS14-SIERRA-14"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [127.297204, 32.466438],
+                      [128.652984, 31.988984],
+                      [128.652984, 33.218921],
+                      [127.297204, 33.705764],
+                      [127.297204, 32.466438]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS15-ROMEO-09"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [128.652984, 31.988984],
+                      [129.981235, 31.502228],
+                      [129.981235, 32.722232],
+                      [128.652984, 33.218921],
+                      [128.652984, 31.988984]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS15-ROMEO-10"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [128.652984, 30.746682],
+                      [129.981235, 30.270859],
+                      [129.981235, 31.502228],
+                      [128.652984, 31.988984],
+                      [128.652984, 30.746682]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS15-ROMEO-11"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [128.652984, 29.493566],
+                      [129.981235, 29.029665],
+                      [129.981235, 30.270859],
+                      [128.652984, 30.746682],
+                      [128.652984, 29.493566]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS15-ROMEO-12"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [128.652984, 28.231282],
+                      [129.981235, 27.780273],
+                      [129.981235, 29.029665],
+                      [128.652984, 29.493566],
+                      [128.652984, 28.231282]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS15-ROMEO-15"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [129.981235, 27.780273],
+                      [131.280858, 27.322941],
+                      [131.280858, 28.558929],
+                      [129.981235, 29.029665],
+                      [129.981235, 27.780273]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS15-SIERRA-00"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [131.280858, 31.007589],
+                      [132.550960, 30.506466],
+                      [132.550960, 31.705021],
+                      [131.280858, 32.217127],
+                      [131.280858, 31.007589]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS15-SIERRA-12"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [129.981235, 30.270859],
+                      [131.280858, 29.787681],
+                      [131.280858, 31.007589],
+                      [129.981235, 31.502228],
+                      [129.981235, 30.270859]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS15-SIERRA-14"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [129.981235, 31.502228],
+                      [131.280858, 31.007589],
+                      [131.280858, 32.217127],
+                      [129.981235, 32.722232],
+                      [129.981235, 31.502228]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS15-SIERRA-15"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [128.652984, 34.435051],
+                      [129.981235, 33.929430],
+                      [129.981235, 35.122480],
+                      [128.652984, 35.636037],
+                      [128.652984, 34.435051]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS16-ROMEO-04"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [128.652984, 33.218921],
+                      [129.981235, 32.722232],
+                      [129.981235, 33.929430],
+                      [128.652984, 34.435051],
+                      [128.652984, 33.218921]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS16-ROMEO-05"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [129.981235, 32.722232],
+                      [131.280858, 32.217127],
+                      [131.280858, 33.414858],
+                      [129.981235, 33.929430],
+                      [129.981235, 32.722232]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS16-SIERRA-00"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [129.981235, 33.929430],
+                      [131.280858, 33.414858],
+                      [131.280858, 34.599440],
+                      [129.981235, 35.122480],
+                      [129.981235, 33.929430]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS16-SIERRA-01"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [131.280858, 33.414858],
+                      [132.550960, 32.892764],
+                      [132.550960, 34.068354],
+                      [131.280858, 34.599440],
+                      [131.280858, 33.414858]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS16-SIERRA-02"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [131.280858, 32.217127],
+                      [132.550960, 31.705021],
+                      [132.550960, 32.892764],
+                      [131.280858, 33.414858],
+                      [131.280858, 32.217127]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS16-SIERRA-03"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [132.550960, 31.705021],
+                      [133.790845, 31.187306],
+                      [133.790845, 32.364553],
+                      [132.550960, 32.892764],
+                      [132.550960, 31.705021]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS16-SIERRA-04"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [133.790845, 32.364553],
+                      [135.000000, 31.831598],
+                      [135.000000, 32.987680],
+                      [133.790845, 33.530639],
+                      [133.790845, 32.364553]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS16-SIERRA-06"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [132.550960, 32.892764],
+                      [133.790845, 32.364553],
+                      [133.790845, 33.530639],
+                      [132.550960, 34.068354],
+                      [132.550960, 32.892764]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS16-SIERRA-07"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [132.550960, 34.068354],
+                      [133.790845, 33.530639],
+                      [133.790845, 34.684313],
+                      [132.550960, 35.230546],
+                      [132.550960, 34.068354]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS16-SIERRA-08"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [133.790845, 33.530639],
+                      [135.000000, 32.987680],
+                      [135.000000, 34.132332],
+                      [133.790845, 34.684313],
+                      [133.790845, 33.530639]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS16-SIERRA-09"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [133.790845, 34.684313],
+                      [135.000000, 34.132332],
+                      [135.000000, 35.264390],
+                      [133.790845, 35.824418],
+                      [133.790845, 34.684313]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS16-SIERRA-10"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [132.550960, 35.230546],
+                      [133.790845, 34.684313],
+                      [133.790845, 35.824418],
+                      [132.550960, 36.378189],
+                      [132.550960, 35.230546]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS16-SIERRA-11"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [131.280858, 35.769633],
+                      [132.550960, 35.230546],
+                      [132.550960, 36.378189],
+                      [131.280858, 36.924298],
+                      [131.280858, 35.769633]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS16-SIERRA-12"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [131.280858, 34.599440],
+                      [132.550960, 34.068354],
+                      [132.550960, 35.230546],
+                      [131.280858, 35.769633],
+                      [131.280858, 34.599440]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS16-SIERRA-13"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [129.981235, 35.122480],
+                      [131.280858, 34.599440],
+                      [131.280858, 35.769633],
+                      [129.981235, 36.300150],
+                      [129.981235, 35.122480]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "AS16-SIERRA-14"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [137.836770, 42.823450],
+                      [139.181442, 42.066234],
+                      [140.652503, 42.682684],
+                      [139.318145, 43.475659],
+                      [137.836770, 42.823450]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR15-BRAVO-00"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [139.318145, 43.475659],
+                      [140.652503, 42.682684],
+                      [142.160450, 43.282988],
+                      [140.840360, 44.111998],
+                      [139.318145, 43.475659]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR15-CHARLIE-05"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [140.840360, 44.111998],
+                      [142.160450, 43.282988],
+                      [143.703758, 43.865229],
+                      [142.402119, 44.730369],
+                      [140.840360, 44.111998]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR15-CHARLIE-06"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [139.465314, 44.935763],
+                      [140.840360, 44.111998],
+                      [142.402119, 44.730369],
+                      [141.042832, 45.591700],
+                      [139.465314, 44.935763]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR15-CHARLIE-07"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [141.042832, 45.591700],
+                      [142.402119, 44.730369],
+                      [144.001755, 45.328716],
+                      [142.662869, 46.227647],
+                      [141.042832, 45.591700]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR15-CHARLIE-08"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [142.402119, 44.730369],
+                      [143.703758, 43.865229],
+                      [145.280565, 44.427550],
+                      [144.001755, 45.328716],
+                      [142.402119, 44.730369]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR15-CHARLIE-09"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [147.306044, 46.457519],
+                      [148.525472, 45.485433],
+                      [150.188095, 45.977796],
+                      [149.005390, 46.984342],
+                      [147.306044, 46.457519]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR15-DELTA-12"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [145.637215, 45.905060],
+                      [146.888658, 44.968173],
+                      [148.525472, 45.485433],
+                      [147.306044, 46.457519],
+                      [145.637215, 45.905060]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR15-DELTA-15"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [129.981235, 37.461319],
+                      [131.280858, 36.924298],
+                      [132.483124, 37.570334],
+                      [131.176282, 38.137102],
+                      [129.981235, 37.461319]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-ALPHA-00"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [131.280858, 36.924298],
+                      [132.550960, 36.378189],
+                      [133.757875, 36.994954],
+                      [132.483124, 37.570334],
+                      [131.280858, 36.924298]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-ALPHA-01"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [135.000000, 37.606882],
+                      [136.242125, 36.994954],
+                      [137.516876, 37.570334],
+                      [136.277182, 38.212401],
+                      [135.000000, 37.606882]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-ALPHA-08"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [136.277182, 38.212401],
+                      [137.516876, 37.570334],
+                      [138.823718, 38.137102],
+                      [137.589076, 38.809891],
+                      [136.277182, 38.212401]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-ALPHA-09"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [137.516876, 37.570334],
+                      [138.719142, 36.924298],
+                      [140.018765, 37.461319],
+                      [138.823718, 38.137102],
+                      [137.516876, 37.570334]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-ALPHA-10"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [136.242125, 36.994954],
+                      [137.449040, 36.378189],
+                      [138.719142, 36.924298],
+                      [137.516876, 37.570334],
+                      [136.242125, 36.994954]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-ALPHA-11"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [135.000000, 36.412486],
+                      [136.209155, 35.824418],
+                      [137.449040, 36.378189],
+                      [136.242125, 36.994954],
+                      [135.000000, 36.412486]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-ALPHA-12"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [132.550960, 36.378189],
+                      [133.790845, 35.824418],
+                      [135.000000, 36.412486],
+                      [133.757875, 36.994954],
+                      [132.550960, 36.378189]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-ALPHA-14"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [133.790845, 35.824418],
+                      [135.000000, 35.264390],
+                      [136.209155, 35.824418],
+                      [135.000000, 36.412486],
+                      [133.790845, 35.824418]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-ALPHA-15"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [140.314546, 39.974148],
+                      [141.530503, 39.238612],
+                      [142.928303, 39.770261],
+                      [141.726310, 40.537567],
+                      [140.314546, 39.974148]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-BRAVO-02"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [141.530503, 39.238612],
+                      [142.702796, 38.502356],
+                      [144.084793, 39.003528],
+                      [142.928303, 39.770261],
+                      [141.530503, 39.238612]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-BRAVO-03"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [140.161913, 38.693712],
+                      [141.347016, 37.987815],
+                      [142.702796, 38.502356],
+                      [141.530503, 39.238612],
+                      [140.161913, 38.693712]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-BRAVO-04"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [138.823718, 38.137102],
+                      [140.018765, 37.461319],
+                      [141.347016, 37.987815],
+                      [140.161913, 38.693712],
+                      [138.823718, 38.137102]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-BRAVO-05"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [137.589076, 38.809891],
+                      [138.823718, 38.137102],
+                      [140.161913, 38.693712],
+                      [138.935125, 39.397697],
+                      [137.589076, 38.809891]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-BRAVO-06"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [138.935125, 39.397697],
+                      [140.161913, 38.693712],
+                      [141.530503, 39.238612],
+                      [140.314546, 39.974148],
+                      [138.935125, 39.397697]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-BRAVO-07"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [137.666096, 40.097987],
+                      [138.935125, 39.397697],
+                      [140.314546, 39.974148],
+                      [139.054089, 40.707123],
+                      [137.666096, 40.097987]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-BRAVO-08"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [137.748460, 41.435587],
+                      [139.054089, 40.707123],
+                      [140.477685, 41.303562],
+                      [139.181442, 42.066234],
+                      [137.748460, 41.435587]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-BRAVO-12"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [139.054089, 40.707123],
+                      [140.314546, 39.974148],
+                      [141.726310, 40.537567],
+                      [140.477685, 41.303562],
+                      [139.054089, 40.707123]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-BRAVO-13"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [140.477685, 41.303562],
+                      [141.726310, 40.537567],
+                      [143.169132, 41.086293],
+                      [141.935777, 41.885495],
+                      [140.477685, 41.303562]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-BRAVO-14"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [139.181442, 42.066234],
+                      [140.477685, 41.303562],
+                      [141.935777, 41.885495],
+                      [140.652503, 42.682684],
+                      [139.181442, 42.066234]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-BRAVO-15"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [145.280565, 44.427550],
+                      [146.501556, 43.526658],
+                      [148.080629, 44.033283],
+                      [146.888658, 44.968173],
+                      [145.280565, 44.427550]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-CHARLIE-05"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [143.703758, 43.865229],
+                      [144.949564, 42.998748],
+                      [146.501556, 43.526658],
+                      [145.280565, 44.427550],
+                      [143.703758, 43.865229]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-CHARLIE-06"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [144.949564, 42.998748],
+                      [146.141471, 42.133222],
+                      [147.667060, 42.628360],
+                      [146.501556, 43.526658],
+                      [144.949564, 42.998748]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-CHARLIE-07"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [143.426969, 42.451137],
+                      [144.641461, 41.618702],
+                      [146.141471, 42.133222],
+                      [144.949564, 42.998748],
+                      [143.426969, 42.451137]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-CHARLIE-08"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [142.160450, 43.282988],
+                      [143.426969, 42.451137],
+                      [144.949564, 42.998748],
+                      [143.703758, 43.865229],
+                      [142.160450, 43.282988]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-CHARLIE-09"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [140.652503, 42.682684],
+                      [141.935777, 41.885495],
+                      [143.426969, 42.451137],
+                      [142.160450, 43.282988],
+                      [140.652503, 42.682684]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-CHARLIE-10"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [141.935777, 41.885495],
+                      [143.169132, 41.086293],
+                      [144.641461, 41.618702],
+                      [143.426969, 42.451137],
+                      [141.935777, 41.885495]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-CHARLIE-11"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [146.888658, 44.968173],
+                      [148.080629, 44.033283],
+                      [149.684159, 44.517157],
+                      [148.525472, 45.485433],
+                      [146.888658, 44.968173]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-DELTA-00"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [148.525472, 45.485433],
+                      [149.684159, 44.517157],
+                      [151.309225, 44.976946],
+                      [150.188095, 45.977796],
+                      [148.525472, 45.485433]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "NR16-DELTA-03"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [135.000000, 35.264390],
+                      [135.000000, 34.132332],
+                      [136.209155, 34.684313],
+                      [136.209155, 35.824418],
+                      [135.000000, 35.264390]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "PA01-ALPHA-00"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [136.209155, 35.824418],
+                      [136.209155, 34.684313],
+                      [137.449040, 35.230546],
+                      [137.449040, 36.378189],
+                      [136.209155, 35.824418]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "PA01-ALPHA-01"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [136.209155, 34.684313],
+                      [136.209155, 33.530639],
+                      [137.449040, 34.068354],
+                      [137.449040, 35.230546],
+                      [136.209155, 34.684313]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "PA01-ALPHA-02"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [135.000000, 34.132332],
+                      [135.000000, 32.987680],
+                      [136.209155, 33.530639],
+                      [136.209155, 34.684313],
+                      [135.000000, 34.132332]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "PA01-ALPHA-03"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [138.719142, 33.414858],
+                      [138.719142, 32.217127],
+                      [140.018765, 32.722232],
+                      [140.018765, 33.929430],
+                      [138.719142, 33.414858]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "PA01-ALPHA-10"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [138.719142, 34.599440],
+                      [138.719142, 33.414858],
+                      [140.018765, 33.929430],
+                      [140.018765, 35.122480],
+                      [138.719142, 34.599440]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "PA01-ALPHA-11"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [138.719142, 35.769633],
+                      [138.719142, 34.599440],
+                      [140.018765, 35.122480],
+                      [140.018765, 36.300150],
+                      [138.719142, 35.769633]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "PA01-ALPHA-12"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [137.449040, 35.230546],
+                      [137.449040, 34.068354],
+                      [138.719142, 34.599440],
+                      [138.719142, 35.769633],
+                      [137.449040, 35.230546]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "PA01-ALPHA-13"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [137.449040, 36.378189],
+                      [137.449040, 35.230546],
+                      [138.719142, 35.769633],
+                      [138.719142, 36.924298],
+                      [137.449040, 36.378189]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "PA01-ALPHA-14"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [138.719142, 36.924298],
+                      [138.719142, 35.769633],
+                      [140.018765, 36.300150],
+                      [140.018765, 37.461319],
+                      [138.719142, 36.924298]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "PA01-ALPHA-15"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [138.719142, 32.217127],
+                      [138.719142, 31.007589],
+                      [140.018765, 31.502228],
+                      [140.018765, 32.722232],
+                      [138.719142, 32.217127]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "PA01-BRAVO-05"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [140.018765, 37.461319],
+                      [140.018765, 36.300150],
+                      [141.347016, 36.820660],
+                      [141.347016, 37.987815],
+                      [140.018765, 37.461319]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "PA02-ALPHA-00"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [140.018765, 36.300150],
+                      [140.018765, 35.122480],
+                      [141.347016, 35.636037],
+                      [141.347016, 36.820660],
+                      [140.018765, 36.300150]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "PA02-ALPHA-01"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [140.018765, 35.122480],
+                      [140.018765, 33.929430],
+                      [141.347016, 34.435051],
+                      [141.347016, 35.636037],
+                      [140.018765, 35.122480]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "PA02-ALPHA-14"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [140.018765, 25.263807],
+                      [140.018765, 24.000351],
+                      [141.347016, 24.407155],
+                      [141.347016, 25.686230],
+                      [140.018765, 25.263807]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "PA02-CHARLIE-06"
+                  }
+                }, {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                      [141.347016, 26.961566],
+                      [141.347016, 25.686230],
+                      [142.702796, 26.102023],
+                      [142.702796, 27.391591],
+                      [141.347016, 26.961566]
+                    ]
+                  },
+                  "properties": {
+                    "cell": "PA02-CHARLIE-08"
+                  }
+                }]
+              }
+            });
+            map.addLayer({
+              'id': 'cells',
+              'type': 'line',
+              'source': 'cells',
+              'layout': {
+                'line-join': 'round',
+                'line-cap': 'round'
+              },
+              'paint': {
+                'line-color': '#ffa500',
+                'line-opacity': 0.5,
+                'line-width': 2,
+              }
+            });
+            map.addLayer({
+              'id': 'csvData',
+              'type': 'circle',
+              'source': {
+                'type': 'geojson',
+                'data': data
+              },
+              'paint': {
+                'circle-radius': 3.5,
+                'circle-color': '#ff0099',
+                'circle-stroke-width': 1.0,
+                'circle-stroke-color': '#222222'
+              },
+              'filter': ['==', '$type', 'Point'],
+            });
+            map.on('click', 'csvData', function (e) {
+              var catefory = [e.features[0].properties.category1, e.features[0].properties.category2]
+              var bgCode = ['#fff', '#fff'];
+              var fcCode = ['#fff', '#fff'];
+              var bg, fc, bgL, fcL;
+              for (var i = 0; i < 2; i++) {
+                bg = crc32(catefory[i]);
+                fc = [~bg[0] & 0xff, ~bg[1] & 0xff, ~bg[2] & 0xff, ];
+                bgL = brightness(bg[0], bg[1], bg[2]);
+                fcL = brightness(fc[0], fc[1], fc[2]);
+                if (Math.abs(bgL - fcL) < 125) {
+                  fc[0] = fc[1] = fc[2] = ((0xff - bgL) > bgL) ? 0xff : 0x00;
+                }
+                bgCode[i] = toColorCode(bg);
+                fcCode[i] = toColorCode(fc);
+              }
+              var coordinates = e.features[0].geometry.coordinates.slice();
+              var description = '<h3>' + e.features[0].properties.title + '</h3><h4><b>' + 'Location: ' + '</b>' + e.features[0].properties.location + '</h4><h4><b>' + 'Intel: ' + '</b><a href="' + e.features[0].properties.intel + '">' + e.features[0].properties.intel + '</a></h4><h4><b>' + 'Regional Cell: ' + '</b>' + e.features[0].properties.regionalcell + '</h4><h4><b>' + 'Unofficial Category: ' + '</b><span class="category" style="color:' + fcCode[0] + '; background-color:' + bgCode[0] + ';">' + e.features[0].properties.category1 + '</span> <span class="category" style="color:' + fcCode[1] + '; background-color:' + bgCode[1] + ';">' + e.features[0].properties.category2 + '</span></h4><div class="portalPhoto"><img src="' + e.features[0].properties.image + '"></div>';
+              while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+              }
+              new mapboxgl.Popup().setLngLat(coordinates).setHTML(description).addTo(map);
+            });
+            map.on('mouseenter', 'csvData', function () {
+              map.getCanvas().style.cursor = 'pointer';
+            });
+            map.on('mouseleave', 'places', function () {
+              map.getCanvas().style.cursor = '';
+            });
+            var bbox = turf.bbox(data);
+            map.fitBounds(bbox, {
+              padding: 50
+            });
+          });
+        });
+      };
+    });
+
+    function crc32(str) {
+      function Utf8Encode(string) {
+        string = string.replace(/\r\n/g, "\n");
+        var utftext = "";
+        for (var n = 0; n < string.length; n++) {
+          var c = string.charCodeAt(n);
+          if (c < 128) {
+            utftext += String.fromCharCode(c);
+          } else if ((c > 127) && (c < 2048)) {
+            utftext += String.fromCharCode((c >> 6) | 192);
+            utftext += String.fromCharCode((c & 63) | 128);
+          } else {
+            utftext += String.fromCharCode((c >> 12) | 224);
+            utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+            utftext += String.fromCharCode((c & 63) | 128);
+          }
+        }
+        return utftext;
+      };
+      var crc = Utf8Encode(str);
+      var table = "00000000 77073096 EE0E612C 990951BA 076DC419 706AF48F E963A535 9E6495A3 0EDB8832 79DCB8A4 E0D5E91E 97D2D988 09B64C2B 7EB17CBD E7B82D07 90BF1D91 1DB71064 6AB020F2 F3B97148 84BE41DE 1ADAD47D 6DDDE4EB F4D4B551 83D385C7 136C9856 646BA8C0 FD62F97A 8A65C9EC 14015C4F 63066CD9 FA0F3D63 8D080DF5 3B6E20C8 4C69105E D56041E4 A2677172 3C03E4D1 4B04D447 D20D85FD A50AB56B 35B5A8FA 42B2986C DBBBC9D6 ACBCF940 32D86CE3 45DF5C75 DCD60DCF ABD13D59 26D930AC 51DE003A C8D75180 BFD06116 21B4F4B5 56B3C423 CFBA9599 B8BDA50F 2802B89E 5F058808 C60CD9B2 B10BE924 2F6F7C87 58684C11 C1611DAB B6662D3D 76DC4190 01DB7106 98D220BC EFD5102A 71B18589 06B6B51F 9FBFE4A5 E8B8D433 7807C9A2 0F00F934 9609A88E E10E9818 7F6A0DBB 086D3D2D 91646C97 E6635C01 6B6B51F4 1C6C6162 856530D8 F262004E 6C0695ED 1B01A57B 8208F4C1 F50FC457 65B0D9C6 12B7E950 8BBEB8EA FCB9887C 62DD1DDF 15DA2D49 8CD37CF3 FBD44C65 4DB26158 3AB551CE A3BC0074 D4BB30E2 4ADFA541 3DD895D7 A4D1C46D D3D6F4FB 4369E96A 346ED9FC AD678846 DA60B8D0 44042D73 33031DE5 AA0A4C5F DD0D7CC9 5005713C 270241AA BE0B1010 C90C2086 5768B525 206F85B3 B966D409 CE61E49F 5EDEF90E 29D9C998 B0D09822 C7D7A8B4 59B33D17 2EB40D81 B7BD5C3B C0BA6CAD EDB88320 9ABFB3B6 03B6E20C 74B1D29A EAD54739 9DD277AF 04DB2615 73DC1683 E3630B12 94643B84 0D6D6A3E 7A6A5AA8 E40ECF0B 9309FF9D 0A00AE27 7D079EB1 F00F9344 8708A3D2 1E01F268 6906C2FE F762575D 806567CB 196C3671 6E6B06E7 FED41B76 89D32BE0 10DA7A5A 67DD4ACC F9B9DF6F 8EBEEFF9 17B7BE43 60B08ED5 D6D6A3E8 A1D1937E 38D8C2C4 4FDFF252 D1BB67F1 A6BC5767 3FB506DD 48B2364B D80D2BDA AF0A1B4C 36034AF6 41047A60 DF60EFC3 A867DF55 316E8EEF 4669BE79 CB61B38C BC66831A 256FD2A0 5268E236 CC0C7795 BB0B4703 220216B9 5505262F C5BA3BBE B2BD0B28 2BB45A92 5CB36A04 C2D7FFA7 B5D0CF31 2CD99E8B 5BDEAE1D 9B64C2B0 EC63F226 756AA39C 026D930A 9C0906A9 EB0E363F 72076785 05005713 95BF4A82 E2B87A14 7BB12BAE 0CB61B38 92D28E9B E5D5BE0D 7CDCEFB7 0BDBDF21 86D3D2D4 F1D4E242 68DDB3F8 1FDA836E 81BE16CD F6B9265B 6FB077E1 18B74777 88085AE6 FF0F6A70 66063BCA 11010B5C 8F659EFF F862AE69 616BFFD3 166CCF45 A00AE278 D70DD2EE 4E048354 3903B3C2 A7672661 D06016F7 4969474D 3E6E77DB AED16A4A D9D65ADC 40DF0B66 37D83BF0 A9BCAE53 DEBB9EC5 47B2CF7F 30B5FFE9 BDBDF21C CABAC28A 53B39330 24B4A3A6 BAD03605 CDD70693 54DE5729 23D967BF B3667A2E C4614AB8 5D681B02 2A6F2B94 B40BBE37 C30C8EA1 5A05DF1B 2D02EF8D";
+      if (typeof (crc) == "undefined") {
+        crc = 0;
+      }
+      var x = 0;
+      var y = 0;
+      var tmp = '';
+      crc = crc ^ (-1);
+      for (var i = 0, iTop = str.length; i < iTop; i++) {
+        y = (crc ^ str.charCodeAt(i)) & 0xFF;
+        x = "0x" + table.substr(y * 9, 8);
+        crc = (crc >>> 8) ^ x;
+      }
+      tmp = crc ^ (-1);
+      return [
+        (tmp & 0xFF000000) >>> 24, (tmp & 0x00FF0000) >>> 16, (tmp & 0x0000FF00) >>> 8, (tmp & 0x000000FF) >>> 0,
+      ];
+    };
+
+    function toHex(b) {
+      var str = b.toString(16);
+      if (2 <= str.length) {
+        return str;
+      }
+      return "0" + str;
+    }
+
+    function toColorCode(bytes) {
+      return "#" + toHex(bytes[0]) + toHex(bytes[1]) + toHex(bytes[2]);
+    }
+
+    function brightness(r, g, b) {
+      return Math.floor(((r * 299) + (g * 587) + (b * 114)) / 1000);
+    }
+  </script>
+</body>
+</html>
