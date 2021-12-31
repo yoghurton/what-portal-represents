@@ -140,6 +140,7 @@ ul>li:not(:nth-child(1)):before {
       transformRequest: transformRequest
     });
     $(document).ready(function () {
+
       $.ajax({
         type: "GET",
         url: 'https://docs.google.com/spreadsheets/d/1TYT6ZOynBcqLjDSBxQCztbODRPtax3f_X8JR9REJr_w/gviz/tq?tqx=out:csv&sheet=map_data',
@@ -156,20 +157,6 @@ ul>li:not(:nth-child(1)):before {
           delimiter: ','
         }, function (err, data) {
           map.on('load', function () {
-            map.addLayer({
-              'id': 'cells',
-              'type': 'line',
-              'source': 'cells',
-              'layout': {
-                'line-join': 'round',
-                'line-cap': 'round'
-              },
-              'paint': {
-                'line-color': '#ffa500',
-                'line-opacity': 0.5,
-                'line-width': 2,
-              }
-            });
             map.addLayer({
               'id': 'csvData',
               'type': 'circle',
@@ -206,6 +193,62 @@ ul>li:not(:nth-child(1)):before {
           });
         });
       };
+
+
+      $.ajax({
+        type: "GET",
+        url: 'https://docs.google.com/spreadsheets/d/1TYT6ZOynBcqLjDSBxQCztbODRPtax3f_X8JR9REJr_w/gviz/tq?tqx=out:csv&sheet=map_data2',
+        dataType: "text",
+        success: function (csvData2) {
+          makeGeoJSON2(csvData2);
+        }
+      });
+
+      function makeGeoJSON2(csvData2) {
+        csv2geojson.csv2geojson(csvData2, {
+          latfield: 'lat',
+          lonfield: 'lng',
+          delimiter: ','
+        }, function (err, data) {
+          map.on('load', function () {
+            map.addLayer({
+              'id': 'csvData2',
+              'type': 'circle',
+              'source': {
+                'type': 'geojson',
+                'data': data
+              },
+              'paint': {
+                'circle-radius': 3.5,
+                'circle-color': '#ff9900',
+                'circle-stroke-width': 1.0,
+                'circle-stroke-color': '#222222'
+              },
+              'filter': ['==', '$type', 'Point'],
+            });
+            map.on('click', 'csvData2', function (e) {
+              var coordinates = e.features[0].geometry.coordinates.slice();
+              var description = '<h3>' + e.features[0].properties.portal + '</h3><h4><b>' + 'City, Country: ' + '</b>' + e.features[0].properties.city + ', ' + e.features[0].properties.country + '</h4><h4><b>' + 'Intel: ' + '</b><a href="' + e.features[0].properties.intel + '">' + e.features[0].properties.intel + '</a></h4><h4><b>' + 'Agent: ' + '</b>' + e.features[0].properties.agent + '</h4><h4><b>' + 'Comment: ' + '</b><a href="' + e.features[0].properties.forum + '">https://...</a></h4><div class="portalPhoto"><img src="' + e.features[0].properties.image + '"></div>';
+              while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+              }
+              new mapboxgl.Popup().setLngLat(coordinates).setHTML(description).addTo(map);
+            });
+            map.on('mouseenter', 'csvData2', function () {
+              map.getCanvas().style.cursor = 'pointer';
+            });
+            map.on('mouseleave', 'places', function () {
+              map.getCanvas().style.cursor = '';
+            });
+            var bbox = turf.bbox(data);
+            map.fitBounds(bbox, {
+              padding: 50
+            });
+          });
+        });
+      };
+
+
     });
 
   </script>
