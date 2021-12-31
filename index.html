@@ -141,59 +141,6 @@ ul>li:not(:nth-child(1)):before {
     });
     $(document).ready(function () {
 
-      $.ajax({
-        type: "GET",
-        url: 'https://docs.google.com/spreadsheets/d/1TYT6ZOynBcqLjDSBxQCztbODRPtax3f_X8JR9REJr_w/gviz/tq?tqx=out:csv&sheet=map_data',
-        dataType: "text",
-        success: function (csvData) {
-          makeGeoJSON(csvData);
-        }
-      });
-
-      function makeGeoJSON(csvData) {
-        csv2geojson.csv2geojson(csvData, {
-          latfield: 'lat',
-          lonfield: 'lng',
-          delimiter: ','
-        }, function (err, data) {
-          map.on('load', function () {
-            map.addLayer({
-              'id': 'csvData',
-              'type': 'circle',
-              'source': {
-                'type': 'geojson',
-                'data': data
-              },
-              'paint': {
-                'circle-radius': 3.5,
-                'circle-color': '#ff0099',
-                'circle-stroke-width': 1.0,
-                'circle-stroke-color': '#222222'
-              },
-              'filter': ['==', '$type', 'Point'],
-            });
-            map.on('click', 'csvData', function (e) {
-              var coordinates = e.features[0].geometry.coordinates.slice();
-              var description = '<h3>' + e.features[0].properties.portal + '</h3><h4><b>' + 'City, Country: ' + '</b>' + e.features[0].properties.city + ', ' + e.features[0].properties.country + '</h4><h4><b>' + 'Intel: ' + '</b><a href="' + e.features[0].properties.intel + '">' + e.features[0].properties.intel + '</a></h4><h4><b>' + 'Agent: ' + '</b>' + e.features[0].properties.agent + '</h4><h4><b>' + 'Comment: ' + '</b><a href="' + e.features[0].properties.forum + '">https://...</a></h4><div class="portalPhoto"><img src="' + e.features[0].properties.image + '"></div>';
-              while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-                coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
-              }
-              new mapboxgl.Popup().setLngLat(coordinates).setHTML(description).addTo(map);
-            });
-            map.on('mouseenter', 'csvData', function () {
-              map.getCanvas().style.cursor = 'pointer';
-            });
-            map.on('mouseleave', 'places', function () {
-              map.getCanvas().style.cursor = '';
-            });
-            var bbox = turf.bbox(data);
-            map.fitBounds(bbox, {
-              padding: 50
-            });
-          });
-        });
-      };
-
 
       $.ajax({
         type: "GET",
@@ -219,8 +166,8 @@ ul>li:not(:nth-child(1)):before {
                 'data': data
               },
               'paint': {
-                'circle-radius': 3.5,
-                'circle-color': '#ff9900',
+                'circle-radius': 3.0,
+                'circle-color': '#ffa600',
                 'circle-stroke-width': 1.0,
                 'circle-stroke-color': '#222222'
               },
@@ -235,6 +182,60 @@ ul>li:not(:nth-child(1)):before {
               new mapboxgl.Popup().setLngLat(coordinates).setHTML(description).addTo(map);
             });
             map.on('mouseenter', 'csvData2', function () {
+              map.getCanvas().style.cursor = 'pointer';
+            });
+            map.on('mouseleave', 'places', function () {
+              map.getCanvas().style.cursor = '';
+            });
+            var bbox = turf.bbox(data);
+            map.fitBounds(bbox, {
+              padding: 50
+            });
+          });
+        });
+      };
+
+
+      $.ajax({
+        type: "GET",
+        url: 'https://docs.google.com/spreadsheets/d/1TYT6ZOynBcqLjDSBxQCztbODRPtax3f_X8JR9REJr_w/gviz/tq?tqx=out:csv&sheet=map_data',
+        dataType: "text",
+        success: function (csvData) {
+          makeGeoJSON(csvData);
+        }
+      });
+
+      function makeGeoJSON(csvData) {
+        csv2geojson.csv2geojson(csvData, {
+          latfield: 'lat',
+          lonfield: 'lng',
+          delimiter: ','
+        }, function (err, data) {
+          map.on('load', function () {
+            map.addLayer({
+              'id': 'csvData',
+              'type': 'circle',
+              'source': {
+                'type': 'geojson',
+                'data': data
+              },
+              'paint': {
+                'circle-radius': 3.0,
+                'circle-color': '#ff0099',
+                'circle-stroke-width': 1.0,
+                'circle-stroke-color': '#222222'
+              },
+              'filter': ['==', '$type', 'Point'],
+            });
+            map.on('click', 'csvData', function (e) {
+              var coordinates = e.features[0].geometry.coordinates.slice();
+              var description = '<h3>' + e.features[0].properties.portal + '</h3><h4><b>' + 'City, Country: ' + '</b>' + e.features[0].properties.city + ', ' + e.features[0].properties.country + '</h4><h4><b>' + 'Intel: ' + '</b><a href="' + e.features[0].properties.intel + '">' + e.features[0].properties.intel + '</a></h4><h4><b>' + 'Agent: ' + '</b>' + e.features[0].properties.agent + '</h4><h4><b>' + 'Comment: ' + '</b><a href="' + e.features[0].properties.forum + '">https://...</a></h4><div class="portalPhoto"><img src="' + e.features[0].properties.image + '"></div>';
+              while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+              }
+              new mapboxgl.Popup().setLngLat(coordinates).setHTML(description).addTo(map);
+            });
+            map.on('mouseenter', 'csvData', function () {
               map.getCanvas().style.cursor = 'pointer';
             });
             map.on('mouseleave', 'places', function () {
